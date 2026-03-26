@@ -310,7 +310,13 @@ async def handler(event):
 # =========================
 async def telegram_main():
     print("Starting Telegram client...")
-    await client.start()
+    await client.connect()
+    print("Telegram client connected.")
+
+    if not await client.is_user_authorized():
+        print("Session not authorized. Fix SESSION.")
+        return
+
     print("Telegram bot is running...")
 
     me = await client.get_me()
@@ -340,4 +346,3 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-    
