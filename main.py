@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 import requests
 from flask import Flask
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, utils
 
 # =========================
 # CONFIG FROM ENV VARIABLES
@@ -172,6 +172,8 @@ def send_to_channel(message: str):
         },
         timeout=20
     )
+    print(f"[BOT API STATUS] {response.status_code}")
+    print(f"[BOT API RESPONSE] {response.text}")
     response.raise_for_status()
 
 # =========================
@@ -249,13 +251,19 @@ async def monitor_trading_session(client_obj):
 # =========================
 # MAIN HANDLER
 # =========================
-@client.on(events.NewMessage(chats=SOURCE_CHANNEL))
+@client.on(events.NewMessage(incoming=True))
 async def handler(event):
-    if not is_trading_time():
-        print(f"[SKIP] Not trading session. Message from {SOURCE_CHANNEL} ignored.")
-        return
-
     try:
+        print(f"[INCOMING] chat_id={event.chat_id} sender_id={event.sender_id}")
+
+        if event.chat_id != SOURCE_CHANNEL:
+            print(f"[SKIP] Not source channel: {event.chat_id}")
+            return
+
+        if not is_trading_time():
+            print(f"[SKIP] Not trading session. Message from {SOURCE_CHANNEL} ignored.")
+            return
+
         now = datetime.now()
         print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
 
@@ -296,7 +304,7 @@ async def handler(event):
         recent_signals.add(sig)
 
     except Exception as e:
-        print("Error:", e)
+        print("Error in handler:", e)
 # =========================
 # TELEGRAM BOT LOOP
 # =========================
@@ -304,6 +312,16 @@ async def telegram_main():
     print("Starting Telegram client...")
     await client.start()
     print("Telegram bot is running...")
+
+    me = await client.get_me()
+    print(f"[SESSION USER] id={me.id} username={getattr(me, 'username', None)}")
+
+    try:
+        source_entity = await client.get_entity(SOURCE_CHANNEL)
+        print(f"[SOURCE RESOLVED] title={getattr(source_entity, 'title', None)} id={utils.get_peer_id(source_entity)}")
+    except Exception as e:
+        print(f"[SOURCE RESOLVE FAILED] {e}")
+
     asyncio.create_task(monitor_trading_session(client))
     await client.run_until_disconnected()
 
@@ -322,4 +340,4 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-        
+    
