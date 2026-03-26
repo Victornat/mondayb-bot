@@ -31,7 +31,11 @@ outside_session_notice_sent = False
 recent_signals = set()
 
 # Telethon session file will be created in the service filesystem
-client = TelegramClient("session", API_ID, API_HASH)
+from telethon.sessions import StringSession
+
+SESSION = os.environ.get("SESSION")
+
+client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
 # =========================
 # FLASK APP FOR RENDER
