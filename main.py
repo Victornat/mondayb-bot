@@ -245,9 +245,8 @@ async def handler(event):
         return
 
         try:
-        now = datetime.now()
-        print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
-
+    now = datetime.now()
+    print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
         text = event.raw_text or ""
         print(f"[SOURCE RAW] {text}")
 
