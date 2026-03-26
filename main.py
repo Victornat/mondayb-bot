@@ -33,7 +33,7 @@ recent_signals = set()
 # Telethon session file will be created in the service filesystem
 from telethon.sessions import StringSession
 
-SESSION = os.environ.get("SESSION")
+SESSION = os.environ["SESSION"]
 
 client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
