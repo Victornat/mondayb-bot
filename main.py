@@ -244,7 +244,7 @@ async def handler(event):
         print(f"[SKIP] Not trading session. Message from {SOURCE_CHANNEL} ignored.")
         return
 
-    try:
+        try:
         now = datetime.now()
         print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
 
