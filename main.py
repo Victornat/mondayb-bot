@@ -289,6 +289,7 @@ async def handler(event):
 # TELEGRAM BOT LOOP
 # =========================
 async def telegram_main():
+    print("Starting Telegram client...")
     await client.start()
     print("Telegram bot is running...")
     asyncio.create_task(monitor_trading_session(client))
