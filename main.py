@@ -20,6 +20,9 @@ DESTINATION_CHANNEL = int(os.environ["DESTINATION_CHANNEL"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 
+if SOURCE_CHANNEL == DESTINATION_CHANNEL:
+    raise Exception("❌ SOURCE and DESTINATION cannot be the same")
+
 ANALYSIS_IMAGE_URL = os.environ.get(
     "ANALYSIS_IMAGE_URL",
     "https://i.postimg.cc/wvJRv9DS/Whisk-d34745068f338f18b684a7ffb5cd969fdr.jpg"
