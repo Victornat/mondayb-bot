@@ -243,9 +243,9 @@ async def handler(event):
         print(f"[SKIP] Not trading session. Message from {SOURCE_CHANNEL} ignored.")
         return
 
-        try:
-                now = datetime.now()
-                print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
+    try:
+        now = datetime.now()
+        print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
 
         text = event.raw_text or ""
         print(f"[SOURCE RAW] {text}")
@@ -257,8 +257,9 @@ async def handler(event):
             print(f"[SOURCE SKIPPED RAW] {text}")
             return
 
-        print(f"[PARSED] pair={parsed['pair']}, direction={parsed['direction']}, expiry={parsed['expiry']}, entry={parsed['entry']}")
+        print(f"[PARSED] pair={parsed['pair']}, direction={parsed['direction']}, expiry={parsed['expiry']}")
 
+        # ONLY M2
         if parsed["expiry"] != "M2":
             print(f"[SKIP] Not M2: {parsed['expiry']}")
             print(f"[SOURCE SKIPPED RAW] {text}")
@@ -279,7 +280,7 @@ async def handler(event):
         send_to_channel(formatted_message)
 
         print(f"[SENT] {datetime.now().strftime('%H:%M:%S')}")
-        print("------")
+        print("--------")
 
         recent_signals.add(sig)
 
