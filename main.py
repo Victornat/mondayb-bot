@@ -228,7 +228,7 @@ async def monitor_trading_session(client_obj):
     while True:
         if not is_trading_time():
             if not outside_session_notice_sent:
-                await send_analysis_photo(client_obj)
+                print("Outside trading session. Analysis photo skipped.")
                 outside_session_notice_sent = True
                 print("Outside trading session. Bot paused.")
             await asyncio.sleep(60)
