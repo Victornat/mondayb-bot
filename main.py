@@ -244,9 +244,9 @@ async def handler(event):
         print(f"[SKIP] Not trading session. Message from {SOURCE_CHANNEL} ignored.")
         return
 
-    try:
-        now = datetime.now()
-        print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
+        try:
+                now = datetime.now()
+                print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
 
         text = event.raw_text or ""
         print(f"[SOURCE RAW] {text}")
