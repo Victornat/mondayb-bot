@@ -286,7 +286,6 @@ async def handler(event):
 
     except Exception as e:
         print("Error:", e)
-
 # =========================
 # TELEGRAM BOT LOOP
 # =========================
