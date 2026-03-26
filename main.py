@@ -260,9 +260,9 @@ async def handler(event):
         print(f"[PARSED] pair={parsed['pair']}, direction={parsed['direction']}, expiry={parsed['expiry']}, entry={parsed['entry']}")
 
         if parsed["expiry"] != "M2":
-        print(f"[SKIP] Not M2: {parsed['expiry']}")
-        print(f"[SOURCE SKIPPED RAW] {text}")
-        return
+            print(f"[SKIP] Not M2: {parsed['expiry']}")
+            print(f"[SOURCE SKIPPED RAW] {text}")
+            return
 
         sig = signal_signature(parsed)
 
