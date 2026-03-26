@@ -20,8 +20,8 @@ DESTINATION_CHANNEL = int(os.environ["DESTINATION_CHANNEL"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 
-if SOURCE_CHANNEL == DESTINATION_CHANNEL:
-    raise Exception("❌ SOURCE and DESTINATION cannot be the same")
+if SOURCE_CHANNEL == DESTINATION_CHANNEL or SOURCE_CHANNEL == CHANNEL_ID:
+    raise Exception("SAFETY CHECK FAILED: source channel must not equal destination/channel id")
 
 ANALYSIS_IMAGE_URL = os.environ.get(
     "ANALYSIS_IMAGE_URL",
@@ -249,30 +249,36 @@ async def handler(event):
         print(f"[RECEIVED] {now.strftime('%H:%M:%S')}")
 
         text = event.raw_text or ""
+        print(f"[SOURCE RAW] {text}")
+
         parsed = parse_signal(text)
 
         if not parsed:
             print("[SKIP] Not signal")
+            print(f"[SOURCE SKIPPED RAW] {text}")
             return
 
-        raw = text.lower()
+        print(f"[PARSED] pair={parsed['pair']}, direction={parsed['direction']}, expiry={parsed['expiry']}, entry={parsed['entry']}")
 
-        if "2-min" not in raw and "2 min" not in raw:
-            print("[SKIP] Not M2")
-            return
-
-        if parsed["expiry"] != "M2":
-            print("[SKIP] Parsed not M2")
+        if parsed["expiry"] not in ["M2", "M5"]:
+            print(f"[SKIP] Unsupported expiry: {parsed['expiry']}")
+            print(f"[SOURCE SKIPPED RAW] {text}")
             return
 
         sig = signal_signature(parsed)
 
         if sig in recent_signals:
-            print("[SKIP] Duplicate")
+            print(f"[SKIP] Duplicate signal: {sig}")
+            print(f"[SOURCE DUPLICATE RAW] {text}")
             return
 
-        print(f"[SENDING] {datetime.now().strftime('%H:%M:%S')}")
-        send_to_channel(format_signal(parsed))
+        formatted_message = format_signal(parsed)
+
+        print(f"[FORWARDING] {datetime.now().strftime('%H:%M:%S')}")
+        print(f"[FORWARDED MESSAGE]\n{formatted_message}")
+
+        send_to_channel(formatted_message)
+
         print(f"[SENT] {datetime.now().strftime('%H:%M:%S')}")
         print("------")
 
