@@ -296,6 +296,7 @@ async def telegram_main():
     await client.run_until_disconnected()
 
 def run_telegram_bot():
+    print("run_telegram_bot started")
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(telegram_main())
