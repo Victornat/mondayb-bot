@@ -40,7 +40,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Bot is running", 200
+    return "Bot is running v2", 200
 
 @app.route("/health")
 def health():
