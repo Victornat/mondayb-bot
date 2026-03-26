@@ -1,4 +1,3 @@
-raise Exception("STOP BOT NOW")
 import os
 import re
 import asyncio
