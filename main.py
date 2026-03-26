@@ -223,9 +223,17 @@ async def send_analysis_photo(client_obj):
 # PERIODIC SESSION MONITOR
 # =========================
 async def monitor_trading_session(client_obj):
-    global outside_session_notice_sent
+    global outside_session_notice_sent, recent_signals
+    last_clear_time = datetime.now() # Initialize last clear time
 
     while True:
+        now = datetime.now()
+        # Clear recent_signals every hour
+        if (now - last_clear_time).total_seconds() >= 3600: # 3600 seconds = 1 hour
+            recent_signals.clear()
+            last_clear_time = now
+            print("[INFO] recent_signals set cleared.")
+
         if not is_trading_time():
             if not outside_session_notice_sent:
                 print("Outside trading session. Analysis photo skipped.")
@@ -314,3 +322,4 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+        
