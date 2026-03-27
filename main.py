@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 
 import requests
 from flask import Flask
-from telethon import TelegramClient, events, utils
+from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 
 # =========================
 # CONFIG FROM ENV VARIABLES
@@ -18,6 +19,7 @@ SOURCE_CHANNEL = int(os.environ["SOURCE_CHANNEL"])
 DESTINATION_CHANNEL = int(os.environ["DESTINATION_CHANNEL"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 BOT_TOKEN = os.environ["BOT_TOKEN"]
+SESSION = os.environ["SESSION"]
 
 if SOURCE_CHANNEL == DESTINATION_CHANNEL or SOURCE_CHANNEL == CHANNEL_ID:
     raise Exception("SAFETY CHECK FAILED: source channel must not equal destination/channel id")
@@ -30,11 +32,6 @@ ANALYSIS_IMAGE_URL = os.environ.get(
 outside_session_notice_sent = False
 recent_signals = set()
 
-# Telethon session file will be created in the service filesystem
-from telethon.sessions import StringSession
-
-SESSION = os.environ["SESSION"]
-
 client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
 # =========================
@@ -44,7 +41,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Bot is running v2", 200
+    return "Bot is running", 200
 
 @app.route("/health")
 def health():
@@ -172,8 +169,10 @@ def send_to_channel(message: str):
         },
         timeout=20
     )
+
     print(f"[BOT API STATUS] {response.status_code}")
     print(f"[BOT API RESPONSE] {response.text}")
+
     response.raise_for_status()
 
 # =========================
@@ -196,42 +195,16 @@ def is_trading_time():
     return False
 
 # =========================
-# FORMAT ANALYSIS MESSAGE
-# =========================
-def format_analysis_message():
-    now = datetime.utcnow() + timedelta(hours=1)
-    current_time = now.strftime("%I:%M %p").lstrip("0")
-
-    return (
-        f"🕒 {current_time} (WAT)\n\n"
-        f"Well-done! Current session completed.\n"
-        f"AI is currently analyzing the market for opportunities.\n"
-        f"Prepare for the next session.\n\n"
-        f"⚡ Mondayb Trading AI"
-    )
-
-# =========================
-# SEND ANALYSIS PHOTO
-# =========================
-async def send_analysis_photo(client_obj):
-    caption = format_analysis_message()
-    await client_obj.send_file(
-        CHANNEL_ID,
-        ANALYSIS_IMAGE_URL,
-        caption=caption
-    )
-
-# =========================
 # PERIODIC SESSION MONITOR
 # =========================
 async def monitor_trading_session(client_obj):
     global outside_session_notice_sent, recent_signals
-    last_clear_time = datetime.now() # Initialize last clear time
+    last_clear_time = datetime.now()
 
     while True:
         now = datetime.now()
-        # Clear recent_signals every hour
-        if (now - last_clear_time).total_seconds() >= 3600: # 3600 seconds = 1 hour
+
+        if (now - last_clear_time).total_seconds() >= 3600:
             recent_signals.clear()
             last_clear_time = now
             print("[INFO] recent_signals set cleared.")
@@ -277,8 +250,14 @@ async def handler(event):
             print(f"[SOURCE SKIPPED RAW] {text}")
             return
 
-        print(f"[PARSED] pair={parsed['pair']}, direction={parsed['direction']}, expiry={parsed['expiry']}")
+        print(
+            f"[PARSED] pair={parsed['pair']}, "
+            f"direction={parsed['direction']}, "
+            f"expiry={parsed['expiry']}, "
+            f"entry={parsed['entry']}"
+        )
 
+        # M2 ONLY
         if parsed["expiry"] != "M2":
             print(f"[SKIP] Not M2: {parsed['expiry']}")
             print(f"[SOURCE SKIPPED RAW] {text}")
@@ -305,6 +284,7 @@ async def handler(event):
 
     except Exception as e:
         print("Error in handler:", e)
+
 # =========================
 # TELEGRAM BOT LOOP
 # =========================
@@ -313,21 +293,26 @@ async def telegram_main():
     await client.connect()
     print("Telegram client connected.")
 
-    if not await client.is_user_authorized():
+    authorized = await client.is_user_authorized()
+    print(f"Authorized: {authorized}")
+
+    if not authorized:
         print("Session not authorized. Fix SESSION.")
         return
 
-    print("Telegram bot is running...")
-
-    me = await client.get_me()
-    print(f"[SESSION USER] id={me.id} username={getattr(me, 'username', None)}")
+    try:
+        me = await client.get_me()
+        print(f"[SESSION USER] id={me.id} username={getattr(me, 'username', None)}")
+    except Exception as e:
+        print(f"[SESSION USER ERROR] {e}")
 
     try:
         source_entity = await client.get_entity(SOURCE_CHANNEL)
-        print(f"[SOURCE RESOLVED] title={getattr(source_entity, 'title', None)} id={utils.get_peer_id(source_entity)}")
+        print(f"[SOURCE RESOLVED] id={getattr(source_entity, 'id', None)} title={getattr(source_entity, 'title', None)}")
     except Exception as e:
         print(f"[SOURCE RESOLVE FAILED] {e}")
 
+    print("Telegram bot is running...")
     asyncio.create_task(monitor_trading_session(client))
     await client.run_until_disconnected()
 
